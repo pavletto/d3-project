@@ -139,9 +139,9 @@
                 .attr('id', function(d, i) {
                     return 'node-' + i;
                 })
-                .attr("transform", function(d) {
-                    return "translate(" + source.y0 + "," + source.x0 + ")";
-                })
+                // .attr("transform", function(d) {
+                //     return "translate(" + source.y0 + "," + source.x0 + ")";
+                // })
                 // .on("click", function(d) {
                 //     if (d.children) {
                 //         d._children = d.children;
@@ -315,16 +315,16 @@
                 });
             link.enter().insert("path", "g")
                 .attr("class", "link")
-                .attr("d", function(d) {
-                    var o = {
-                        x: source.y0,
-                        y: source.x0
-                    };
-                    return diagonal({
-                        source: o,
-                        target: o
-                    });
-                });
+                // .attr("d", function(d) {
+                //     var o = {
+                //         x: source.y0,
+                //         y: source.x0
+                //     };
+                //     return diagonal({
+                //         source: o,
+                //         target: o
+                //     });
+                // });
             link.transition()
                 .duration(duration)
                 .attr("d", diagonal);
