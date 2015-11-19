@@ -1,5 +1,4 @@
 (function() {
-    console.log(window)
     Ext.define("d3.widgets.Treeview", {
         extend: 'Ext.Panel',
         alias: 'widget.d3_treeview',
@@ -11,15 +10,11 @@
         me: null,
         distBetweenLayer: '',
         distBetweenNode: '',
-
         constructor: function(config) {
             this.callParent([config]);
             me = this;
         },
-
         initComponent: function() {
-
-            console.log('2) Tree View initComponent called');
             this.on('afterRender', function() {
                 this.loadScript(this.onD3Loaded, this);
             }, this);
@@ -27,7 +22,6 @@
         },
         loadScript: function(callback, scope) {
             Ext.Loader.injectScriptElement('http://d3js.org/d3.v3.js', this.onLoad, this.onError, this);
-
         },
         onError: function() {
             console.log('Treeview On Error');
@@ -116,42 +110,25 @@
 
         },
         update: function(source) {
-
-            // Compute the new tree layout.
+            var ctl = this;
             var nodes = tree.nodes(root).reverse(),
                 links = tree.links(nodes);
 
-            // Normalize for fixed-depth.
             nodes.forEach(function(d) {
                 console.log(d);
                 d.y = d.depth * 300;
             });
 
-            // Update the nodes…
             var node = svg.selectAll("g.node")
                 .data(nodes, function(d) {
                     return d.id || (d.id = ++i);
                 });
 
-            // Enter any new nodes at the parent's previous position.
             var nodeEnter = node.enter().append("g")
                 .attr("class", "node")
                 .attr('id', function(d, i) {
                     return 'node-' + i;
                 })
-                // .attr("transform", function(d) {
-                //     return "translate(" + source.y0 + "," + source.x0 + ")";
-                // })
-                // .on("click", function(d) {
-                //     if (d.children) {
-                //         d._children = d.children;
-                //         d.children = null;
-                //     } else {
-                //         d.children = d._children;
-                //         d._children = null;
-                //     }
-                //     me.update(d);
-                // });
 
             nodeEnter.append("circle")
                 .attr("r", 30)
@@ -163,42 +140,32 @@
                     return d._children ? "lightsteelblue" : "#fff";
                 });
 
-
-
+            Ext.define('app.window', {
+                extend: 'Ext.window.Window',
+                alias: 'widget.win',
+                itemId: 'win',
+                title: 'Окошко',
+                x:200,
+                y:200,
+                width: 300,
+                height: 300,
+                text: '',
+                autoHeight: true,
+                autoScroll: true,
+                maximizable: true,
+                closeAction: 'hide',
+                shadow: true,
+                resizable: true,
+                draggable: true,
+                closable: true,
+                modal: false,
+                items:[{xtype:'displayfield'}],
+                headerPosition: 'top',renderTo: 'ext-zone'
+            });
+            win = Ext.create('app.window')
             d3.selectAll('.circle')
                 .each(function(e, i) {
-                    Ext.get('circle-' + i).on('click', function(e, t, eOpts) {
-                        var win = Ext.create('widget.window', { // создание окна
-                            title: 'Пример 1',
-                            html: '<h1>Информация о узле:</h1><pre>' + Ext.JSON.encode(d3.select('#node-' + i).data()[0].data[0]) + '</pre>',
-                            x: 400, // позиция относительно родительского окна.
-                            y: 400, // - width: '30%',
-                            // ширина. Строковое значение задается по стандарту
-                            // - px,%, em и т.д.
-                            autoHeight: true,
-                            autoScroll: true, // скроллинг если текст не влезает.
-                            maximizable: true, // значок «раскрыть окно на весь экран»
-                            bodyCls: 'red', // установка класса для содержимого окна.
-                            //Здесь .css1 {background:#fff;color:red;}
-                            bodyPadding: '10px', // установка паддинга для содержимого.
-                            // Лучше конечно через bodyCls
-                            bodyStyle: 'background-color:#fff', // прямое указание стиля для содержимого окна
-                            closeAction: 'hide', // !!! Важно. Указание на то, что окно при закрывании
-                            // не удаляется вместе с содержимым,
-                            /*  этот блок параметров лишний. Они и так выставлены
-                            по умолчанию так как указано ниже  */
-
-                            shadow: true, // тень
-                            resizable: true, // возможность изменения размеров окна.
-                            draggable: true, // возможность перетаскивания окна.
-                            closable: true, // спрятать иконку закрытия окна в заголовке
-                            modal: false, //  modal задает модальное окно.
-                            // При открсытии делает недоступными все остальные окна
-                            headerPosition: 'top', //  заголовок  и кнопку закрытия разместим
-                            //справа {left, top, right, bottom}
-                        });
-
-
+                    d3.select('#circle-' + i).on('click', function(e, t, eOpts) {
                         d3.select('#circle-' + i)
                             .transition()
                             .duration(100)
@@ -211,17 +178,24 @@
                                 return "scale(1, 1)";
                             });
                         r = 10;
-                        if (!this.firstClick) {
+                        if (!this.pressed) {
                             if (!d3.select('#button-' + i)[0][0]) {
                                 d3.select('#circle-' + i)
-                                    .attr('class', 'selected');
-
+                                    .classed('unselected', false)
+                                    .classed('selected', true)
+                                this.pressed = true;
+                                if (d3.selectAll('.selected').size() == 1)
+                                    ctl.prevPressed = i;
+                                if (d3.selectAll('.selected').size() > 1) {
+                                    d3.select('#circle-' + ctl.prevPressed).classed('unselected', true).classed('selected', false).attr('r', 30).property('pressed', null);
+                                    d3.select('#button-' + ctl.prevPressed).transition().duration(200).attr("opacity", 0).remove();
+                                    ctl.prevPressed = i;
+                                }
                                 d3.select('#node-' + i).append("circle")
                                     .attr("id", function(d) {
                                         return "button-" + i;
                                     })
-
-                                .attr('r', r)
+                                    .attr('r', r)
                                     .attr("transform", function(d) {
                                         return "translate(" + (50 + r + 5 + 10) + ", 0)";
                                     })
@@ -232,40 +206,34 @@
                                     .style("fill", function(d) {
                                         return d._children ? "lightsteelblue" : "#fff";
                                     });
-                                this.firstClick = true;
                                 Ext.get('button-' + i).on('click', function(e, t, eOpts) {
-                                    d3.select('#button-' + i)
                                     d3.select('#button-' + i).transition()
                                         .duration(100)
                                         .attr("transform", function(d) {
-                                            return "scale(1.2, 1.2)";
+                                            return "translate(" + (50 + r + 5 + 10) + ", 0) scale(1.2, 1.2)";
                                         })
                                         .transition()
                                         .duration(100)
                                         .attr("transform", function(d) {
-                                            return "scale(1, 1)";
+                                            return "translate(" + (50 + r + 5 + 10) + ", 0) scale(1, 1)";
                                         });
-
-                                    win.show();
+                                          win.show();
+                                          win.down('displayfield').setValue(Ext.JSON.encode(d3.select('#node-' + i).data()[0].data[0]));
                                 });
                             }
                         } else {
-
                             d3.select('#circle-' + i)
-                                .attr('class', 'unselected')
-
-                            .attr('r', 30);
+                                .classed('unselected', true)
+                                .classed('selected', false)
+                                .attr('r', 30);
                             d3.select('#button-' + i)
                                 .transition()
                                 .duration(200)
                                 .attr("opacity", 0)
                                 .remove();
-                            this.firstClick = null;
+                            this.pressed = null;
                         }
                     });
-                    // Ext.get('circle-' + i).on('mouseout', function(e, t, eOpts) {
-                    //
-                    // });
                 });
 
             this.node = nodeEnter;
@@ -314,17 +282,7 @@
                     return d.target.id;
                 });
             link.enter().insert("path", "g")
-                .attr("class", "link")
-                // .attr("d", function(d) {
-                //     var o = {
-                //         x: source.y0,
-                //         y: source.x0
-                //     };
-                //     return diagonal({
-                //         source: o,
-                //         target: o
-                //     });
-                // });
+                .attr("class", "link");
             link.transition()
                 .duration(duration)
                 .attr("d", diagonal);
