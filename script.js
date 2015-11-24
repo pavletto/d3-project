@@ -127,7 +127,7 @@
                 "name": "8"
             }, {
                 "name": "9"
-            }]
+            }];
             var gwidth = 70,
                 gheight = 70;
             g = svg.append('g').attr("transform", "translate(500,700)").attr("width", gwidth)
@@ -191,12 +191,10 @@
             win = Ext.create('app.window');
             d3.selectAll('.circle')
                 .each(function(e, i) {
-                    d3.select('#circle-' + i).on('dblclick', function(e, t, eOpts) {
-                        console.log('dblclick');
-                    });
-                     d3.select('#circle-' + i).on('scroll', function(a,b,c){
-                        console.log(a,b,c)
-                     })
+                    // d3.select('#circle-' + i).on('mousewheel', function(a, b, c) {
+                    //     console.log(a, b, c)
+                    // });
+
                     d3.select('#circle-' + i).on('click', function(e, t, eOpts) {
                         d3.select('#circle-' + i)
                             .transition()
@@ -226,11 +224,12 @@
                                 d3.select('#node-' + i).attr("width", gwidth)
                                     .attr("height", gheight);
                                 data.forEach(function(d, j) {
-                                    var sector = j * 360 / n,
+                                    var sector = (j * 360 / n) + 10,
                                         radius = n * gwidth / (n + 2),
                                         δy = n & 1 ? (radius / 2) * (1 - Math.cos(Math.PI / n)) : 0;
                                     d3.select('#node-' + i).append('circle').attr("r", r).attr("transform", function(d) {
-                                            var sector = j * 360 / n;
+                                            // var sector = j * 360 / n;
+                                            d3.select(this).property('sector', sector);
                                             return "translate(0," + δy + ")rotate(" + sector + ")translate(" + radius + ")rotate(" + -sector + ")";
                                         }).attr("id", function(d) {
                                             return "button-" + i + j;
@@ -238,13 +237,32 @@
                                         .classed('button', true)
                                         .attr("opacity", 0)
                                         .transition()
-                                        .duration(200)
+                                        .duration(100)
                                         .attr("opacity", 1)
                                         .style("fill", function(d) {
                                             return d._children ? "lightsteelblue" : "#fff";
                                         })
+
+                                        d3.select('#button-' + i + j).append('text').text(function(d) {
+                                            return j;
+                                        })
+
+                                    d3.select('#node-' + i).on('mousewheel', function(a) {
+                                        console.log(a)
+                                        var e = window.event,
+                                            delta = e.deltaY || e.detail || e.wheelDelta;
+                                        d3.select(this).selectAll('.button').transition()
+                                            .duration(50).attr("transform", function(d) {
+                                                if (delta > 0) {
+                                                    d3.select(this).property('sector', d3.select(this).property('sector') + (360 / n))
+                                                } else {
+                                                    d3.select(this).property('sector', d3.select(this).property('sector') - (360 / n));
+                                                }
+                                                return "translate(0," + δy + ") rotate(" + d3.select(this).property('sector') + ") translate(" + radius + ") rotate(" + -d3.select(this).property('sector') + ")";
+                                            })
+                                    })
+
                                     d3.select('#button-' + i + j).on('click', function(e, t, eOpts) {
-                                        console.log(e)
                                         var attr = d3.select(this).attr("transform");
                                         d3.select(this).transition()
                                             .duration(100)
@@ -259,6 +277,7 @@
                                         win.show();
                                         win.down('displayfield').setValue(Ext.JSON.encode(d3.select('#node-' + i).data()[0].data[0]));
                                     });
+
                                     d3.select('#button-' + i + j).on('mouseenter', function(e, t, eOpts) {
                                         d3.select('#button-' + i + j).transition()
                                             .duration(100).attr('r', 2 * r);
