@@ -139,7 +139,7 @@
                 links = tree.links(nodes);
 
             nodes.forEach(function(d) {
-                d.y = d.depth * 300;
+                d.y = d.depth * 150;
             });
 
             var node = svg.selectAll("g.node")
@@ -194,6 +194,9 @@
                     d3.select('#circle-' + i).on('dblclick', function(e, t, eOpts) {
                         console.log('dblclick');
                     });
+                     d3.select('#circle-' + i).on('scroll', function(a,b,c){
+                        console.log(a,b,c)
+                     })
                     d3.select('#circle-' + i).on('click', function(e, t, eOpts) {
                         d3.select('#circle-' + i)
                             .transition()
@@ -217,7 +220,7 @@
                                     ctl.prevPressed = i;
                                 if (d3.selectAll('.selected').size() > 1) {
                                     d3.select('#circle-' + ctl.prevPressed).classed('unselected', true).classed('selected', false).attr('r', 30).property('pressed', null);
-                                    d3.selectAll('.button').transition().duration(1000).attr("opacity", 0).remove();
+                                    d3.selectAll('.button').transition().duration(100).attr("opacity", 0).remove();
                                     ctl.prevPressed = i;
                                 }
                                 d3.select('#node-' + i).attr("width", gwidth)
