@@ -227,15 +227,26 @@
                                     var sector = (j * 360 / n) + 10,
                                         radius = n * gwidth / (n + 2),
                                         δy = n & 1 ? (radius / 2) * (1 - Math.cos(Math.PI / n)) : 0;
-                                    d3.select('#node-' + i).append('circle').attr("r", r).attr("transform", function(d) {
+
+                                    d3.select('#node-' + i).append('circle').attr("transform", function(d) {
                                             // var sector = j * 360 / n;
+                                            if (sector == 90)
+                                                console.log(d3.select(this).attr('id'))
                                             d3.select(this).property('sector', sector);
+                                            d3.select(this).property('δy', δy);
+                                            d3.select(this).property('radius', radius);
                                             return "translate(0," + δy + ")rotate(" + sector + ")translate(" + radius + ")rotate(" + -sector + ")";
                                         }).attr("id", function(d) {
                                             return "button-" + i + j;
                                         })
                                         .classed('button', true)
                                         .attr("opacity", 0)
+                                        .attr('r', function(d) {
+                                            if (sector == 90)
+                                                return 20;
+                                            else
+                                                return 10;
+                                        })
                                         .transition()
                                         .duration(100)
                                         .attr("opacity", 1)
@@ -243,23 +254,40 @@
                                             return d._children ? "lightsteelblue" : "#fff";
                                         })
 
-                                        d3.select('#button-' + i + j).append('text').text(function(d) {
-                                            return j;
-                                        })
+                                    d3.select('#button-' + i + j)
 
                                     d3.select('#node-' + i).on('mousewheel', function(a) {
-                                        console.log(a)
                                         var e = window.event,
                                             delta = e.deltaY || e.detail || e.wheelDelta;
-                                        d3.select(this).selectAll('.button').transition()
-                                            .duration(50).attr("transform", function(d) {
+                                        d3.select(this).selectAll('.button')
+                                            .transition()
+                                            .duration(50)
+                                            .attr("transform", function(d) {
+                                                var sector = d3.select(this).property('sector');
+
                                                 if (delta > 0) {
-                                                    d3.select(this).property('sector', d3.select(this).property('sector') + (360 / n))
+                                                    d3.select(this)
+                                                        .property('sector', sector > 360 ? sector + (360 / n) - 360 : sector + (360 / n))
+
+
                                                 } else {
-                                                    d3.select(this).property('sector', d3.select(this).property('sector') - (360 / n));
+                                                    d3.select(this)
+                                                        .property('sector', -360 > sector ? sector - (360 / n) + 360 : sector - (360 / n))
                                                 }
+
+                                                console.log(sector)
                                                 return "translate(0," + δy + ") rotate(" + d3.select(this).property('sector') + ") translate(" + radius + ") rotate(" + -d3.select(this).property('sector') + ")";
                                             })
+                                            .transition()
+                                            .duration(100)
+                                            .attr('r', function() {
+                                                if (d3.select(this).property('sector') == 90 || d3.select(this).property('sector') == -270) {
+                                                    console.log(d3.select(this).attr('id'));
+                                                    return 20
+                                                }
+                                                return 10;
+                                            })
+                                        console.log('')
                                     })
 
                                     d3.select('#button-' + i + j).on('click', function(e, t, eOpts) {
@@ -290,7 +318,6 @@
 
                                 });
                                 d3.select('#button-' + i).on('click', function(e, t, eOpts) {
-                                    console.log(e)
                                     d3.select('#button-' + i).transition()
                                         .duration(100)
                                         .attr("transform", function(d) {
